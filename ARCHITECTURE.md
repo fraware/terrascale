@@ -9,6 +9,23 @@ This document describes the architecture for a hypothetical social network desig
 - **Resilience:** Multi-region disaster recovery and automated failover.
 - **Event-Driven Data Flow:** Employing a streaming data pipeline for real-time updates.
 
+## Implementation in this repository
+
+The **full architecture below is aspirational**. What you can run from this repo today is a **narrow slice** that illustrates patterns (API service, relational data, cache-aside, migrations, observability hooks):
+
+| Aspect | In this repo now | Full vision (documented below) |
+|--------|------------------|----------------------------------|
+| Services | **User Service** only | Post, Feed, Notification, and others |
+| Runtime | **FastAPI**, sync **SQLAlchemy 2** + **psycopg2**, **Redis**, **Alembic** | Same language family possible; async drivers and more services at scale |
+| Data stores | Single **PostgreSQL** instance, single **Redis** | Sharded PostgreSQL, NoSQL for graph/posts, replicated caches |
+| Messaging | Not in **docker-compose.yml** | **Kafka** (or managed streaming) between services |
+| Deploy | **Docker Compose** for local dev | **Kubernetes** in cloud regions, global LB, CDN |
+| Observability | **structlog**, optional **OpenTelemetry** OTLP HTTP export | Prometheus/Grafana, centralized logs (ELK/EFK), full tracing mesh |
+
+**Code layout:** the runnable User Service lives under `services/user-service/` (`src/user_service/`, `alembic/`, `Dockerfile`, `tests/`). Root [README.md](README.md) explains how to start the stack and where CI runs.
+
+When you add cross-service events, reintroduce a broker (for example Kafka in **KRaft** mode or a managed equivalent) via a separate Compose override or deployment chart rather than coupling it to the minimal local stack.
+
 ## High-Level Architecture
 
 ### Components
@@ -25,7 +42,7 @@ This document describes the architecture for a hypothetical social network desig
 
 3. **Microservices:**
 
-   - **User Service:** Manages user profiles, authentication, and social graph. (Implemented here as a sample Flask app.)
+   - **User Service:** Manages user profiles, authentication, and social graph. (Implemented in this repo as a sample **FastAPI** application with PostgreSQL and Redis.)
    - **Post Service:** Manages creation, storage, and retrieval of posts.
    - **Feed Service:** Aggregates posts for user timelines.
    - **Notification Service:** Delivers real-time notifications.
@@ -70,11 +87,11 @@ This document describes the architecture for a hypothetical social network desig
 
 - **Cloud & Multi-Region:** AWS, GCP, or Azure – with Kubernetes (EKS, GKE, or AKS) as the orchestration layer.
 - **API Gateway:** NGINX or a cloud-native solution.
-- **Microservices:** Python/Flask for the User Service (sample implementation provided); other services can use similar stacks.
+- **Microservices:** Python/FastAPI for the User Service (sample implementation in `services/user-service/`); other services can use similar stacks.
 - **Databases:** PostgreSQL (transactional, sharded) and Cassandra/DynamoDB (for social graph/posts).
 - **Caching:** Redis.
 - **Event Streaming:** Apache Kafka.
-- **Observability:** Prometheus, Grafana, ELK/EFK, Jaeger.
+- **Observability:** Prometheus, Grafana, ELK/EFK, Jaeger; the sample service additionally supports OTLP HTTP export when configured.
 
 ## Comparison & Inspirations
 

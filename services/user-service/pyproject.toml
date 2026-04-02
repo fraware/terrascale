@@ -1,0 +1,63 @@
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "user-service"
+version = "0.1.0"
+description = "TerraScale user microservice (FastAPI)"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "alembic==1.14.0",
+    "fastapi==0.115.6",
+    "gunicorn==23.0.0",
+    "opentelemetry-api==1.29.0",
+    "opentelemetry-exporter-otlp==1.29.0",
+    "opentelemetry-instrumentation-fastapi==0.50b0",
+    "opentelemetry-instrumentation-redis==0.50b0",
+    "opentelemetry-instrumentation-sqlalchemy==0.50b0",
+    "opentelemetry-sdk==1.29.0",
+    "psycopg2-binary==2.9.10",
+    "pydantic-settings==2.7.0",
+    "redis==5.2.1",
+    "sqlalchemy==2.0.36",
+    "structlog==24.4.0",
+    "uvicorn[standard]==0.34.0",
+]
+
+[dependency-groups]
+dev = [
+    "httpx==0.28.1",
+    "pyright==1.1.391",
+    "pytest==8.3.4",
+    "pytest-asyncio==0.25.0",
+    "pytest-cov==6.0.0",
+    "ruff==0.8.4",
+    "testcontainers[postgres,redis]==4.8.2",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+src = ["src", "tests", "alembic"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+addopts = "-q --cov=user_service --cov-report=term-missing --cov-fail-under=75"
+
+[tool.coverage.run]
+branch = true
+source = ["user_service"]
+
+[tool.coverage.report]
+exclude_lines = ["pragma: no cover", "if TYPE_CHECKING:"]

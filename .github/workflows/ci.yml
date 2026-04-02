@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  user-service:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: services/user-service
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+
+      - name: Install Python
+        run: uv python install 3.12
+
+      - name: Install dependencies
+        run: uv sync --group dev --frozen --python 3.12
+
+      - name: Ruff check
+        run: uv run ruff check src tests alembic
+
+      - name: Ruff format
+        run: uv run ruff format --check src tests alembic
+
+      - name: Pyright
+        run: uv run pyright
+
+      - name: Pytest
+        run: uv run pytest
+
+      - name: Build Docker image
+        run: docker build -t terrascale-user-service:ci .
+
+      - name: Trivy container scan
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: terrascale-user-service:ci
+          format: table
+          severity: CRITICAL,HIGH
+          exit-code: "0"
